@@ -1,6 +1,10 @@
 #import <Foundation/Foundation.h>
+#import <dlfcn.h>
 #import <mach-o/dyld.h>
 #import "fishhook/fishhook.h"
+
+#define RA_BUNDLE_ID @"com.reddit.Reddit"
+#define RA_NAME @"Reddit"
 
 // https://github.com/opa334/IGSideloadFix
 
@@ -15,6 +19,26 @@ void createDirectoryIfNotExists(NSURL* URL) {
                                                    error:nil];
   }
 }
+
+%hook NSBundle
+
+- (NSString*)bundleIdentifier {
+  NSArray* address = [NSThread callStackReturnAddresses];
+  Dl_info info;
+  if (dladdr((void*)[address[2] longLongValue], &info) == 0) return %orig;
+  NSString* path = [NSString stringWithUTF8String:info.dli_fname];
+  if ([path hasPrefix:NSBundle.mainBundle.bundlePath]) return RA_BUNDLE_ID;
+  return %orig;
+}
+
+- (id)objectForInfoDictionaryKey:(NSString*)key {
+  if ([key isEqualToString:@"CFBundleIdentifier"]) return RA_BUNDLE_ID;
+  if ([key isEqualToString:@"CFBundleDisplayName"] || [key isEqualToString:@"CFBundleName"])
+    return RA_NAME;
+  return %orig;
+}
+
+%end
 
 %group SideloadedFixes
 
@@ -119,5 +143,6 @@ static void initSideloadedFixes() {
 }
 
 %ctor {
+  %init;
   initSideloadedFixes();
 }
