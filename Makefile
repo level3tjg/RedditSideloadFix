@@ -1,7 +1,5 @@
-MODULES = jailed
-
 TARGET := iphone:clang:latest:7.0
-INSTALL_TARGET_PROCESSES = Reddit
+INSTALL_TARGET_PROCESSES = Reddit RedditApp
 
 ARCHS = arm64
 

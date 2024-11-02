@@ -25,9 +25,9 @@ static void createDirectoryIfNotExists(NSURL *URL) {
 %hook NSBundle
 
 - (NSString *)bundleIdentifier {
-  NSArray *address = [NSThread callStackReturnAddresses];
+  NSArray <NSNumber *>*addresses = NSThread.callStackReturnAddresses;
   Dl_info info;
-  if (dladdr((void *)[address[2] longLongValue], &info) == 0) return %orig;
+  if (dladdr((void *)[addresses[2] longLongValue], &info) == 0) return %orig;
   NSString *path = [NSString stringWithUTF8String:info.dli_fname];
   if ([path hasPrefix:NSBundle.mainBundle.bundlePath]) return BUNDLE_ID;
   return %orig;
@@ -40,6 +40,12 @@ static void createDirectoryIfNotExists(NSURL *URL) {
   return %orig;
 }
 
+%end
+
+%hook RCAapfzobca
+- (void)setJvnifzvx:(NSString *)bundleIdentifier {
+  %orig(BUNDLE_ID);
+}
 %end
 
 %group SideloadedFixes
@@ -73,7 +79,9 @@ static void loadKeychainAccessGroup() {
   if (ret == errSecSuccess && result) {
     NSDictionary *resultDict = (__bridge id)result;
     keychainAccessGroup = resultDict[(__bridge id)kSecAttrAccessGroup];
-    originalKeychainAccessGroup = [keychainAccessGroup stringByReplacingCharactersInRange:NSMakeRange(0, 10) withString:TEAM_ID];
+    originalKeychainAccessGroup =
+        [keychainAccessGroup stringByReplacingCharactersInRange:NSMakeRange(0, 10)
+                                                     withString:TEAM_ID];
     NSLog(@"loaded keychainAccessGroup: %@", keychainAccessGroup);
   }
 
